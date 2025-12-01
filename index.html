@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Economics Escape Room</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #eee;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #ffd700;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-size: 28px;
+        }
+
+        .room-indicator {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .room-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #333;
+            border: 3px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .room-dot.active {
+            background: #4ecca3;
+            border-color: #4ecca3;
+            box-shadow: 0 0 20px rgba(78, 204, 163, 0.5);
+        }
+
+        .room-dot.completed {
+            background: #ffd700;
+            border-color: #ffd700;
+            color: #1a1a2e;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 auto 10px auto;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecca3, #45b393);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* Room Container */
+        .room-container {
+            position: relative;
+            width: 900px;
+            height: 550px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* Room Styles */
+        .room {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background-size: cover;
+        }
+
+        .room.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Room 1 - Office/Classroom */
+        #room1 {
+            background: linear-gradient(180deg, #d4c4a8 0%, #c4b498 100%);
+        }
+
+        /* Room 2 - Bank/Vault */
+        #room2 {
+            background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+        }
+
+        /* Room 3 - Stock Exchange */
+        #room3 {
+            background: linear-gradient(180deg, #1e3a5f 0%, #0d1b2a 100%);
+        }
+
+        /* Floor patterns */
+        .floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+        }
+
+        #room1 .floor {
+            background: repeating-linear-gradient(
+                90deg,
+                #8b7355 0px,
+                #8b7355 60px,
+                #7a6548 60px,
+                #7a6548 120px
+            );
+        }
+
+        #room2 .floor {
+            background: linear-gradient(180deg, #1a1a1a, #0d0d0d);
+            border-top: 3px solid #333;
+        }
+
+        #room3 .floor {
+            background: linear-gradient(180deg, #0a1628, #050d18);
+            border-top: 2px solid #1e3a5f;
+        }
+
+        /* Walls */
+        .wall {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 400px;
+        }
+
+        #room1 .wall {
+            background: linear-gradient(180deg, #e8dcc8, #d4c4a8);
+            border-bottom: 15px solid #8b7355;
+        }
+
+        #room2 .wall {
+            background: linear-gradient(180deg, #34495e, #2c3e50);
+            border-bottom: 10px solid #1a252f;
+        }
+
+        #room3 .wall {
+            background: linear-gradient(180deg, #1e3a5f, #152238);
+            border-bottom: 8px solid #0d1b2a;
+        }
+
+        /* Clickable puzzle stations */
+        .puzzle-station {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .puzzle-station:hover:not(.solved) {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+        }
+
+        .puzzle-station.solved {
+            filter: brightness(0.7) saturate(0.5);
+            cursor: default;
+            pointer-events: none;
+        }
+
+        /* Checkmark for solved puzzles */
+        .puzzle-station.solved::after {
+            content: '✓';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 30px;
+            height: 30px;
+            background: #4ecca3;
+            border-radius: 50%;
+            font-size: 18px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(78, 204, 163, 0.5);
+            line-height: 30px;
+            text-align: center;
+        }
+
+        /* Question mark indicator */
+        .puzzle-station::before {
+            content: '?';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 28px;
+            background: #e94560;
+            border-radius: 50%;
+            font-size: 16px;
+            color: white;
+            font-weight: bold;
+            line-height: 28px;
+            text-align: center;
+            animation: bounce 1s infinite;
+            z-index: 20;
+        }
+
+        .puzzle-station.solved::before {
+            display: none;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-8px); }
+        }
+
+        /* ============ ROOM 1 OBJECTS ============ */
+
+        /* Whiteboard */
+        .whiteboard {
+            width: 200px;
+            height: 140px;
+            background: #fff;
+            border: 12px solid #8b7355;
+            top: 50px;
+            left: 50px;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .whiteboard-content {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #f8f8f8 0%, #f0f0f0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-size: 14px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        /* Computer/Monitor */
+        .computer {
+            width: 120px;
+            height: 100px;
+            top: 70px;
+            right: 80px;
+        }
+
+        .monitor {
+            width: 120px;
+            height: 80px;
+            background: #333;
+            border: 4px solid #222;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .screen {
+            width: 100px;
+            height: 60px;
+            background: linear-gradient(135deg, #0066cc, #004499);
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .monitor-stand {
+            width: 30px;
+            height: 20px;
+            background: #444;
+            margin: 0 auto;
+        }
+
+        /* Bookshelf */
+        .bookshelf {
+            width: 160px;
+            height: 180px;
+            background: linear-gradient(180deg, #5c4033, #4a3728);
+            border: 4px solid #3d2b1f;
+            top: 40px;
+            left: 320px;
+        }
+
+        .shelf {
+            height: 33%;
+            border-bottom: 4px solid #3d2b1f;
+            display: flex;
+            align-items: flex-end;
+            padding: 5px;
+            gap: 3px;
+        }
+
+        .book {
+            width: 12px;
+            height: 35px;
+            border-radius: 2px;
+        }
+
+        /* Desk */
+        .desk-station {
+            width: 180px;
+            height: 100px;
+            bottom: 170px;
+            left: 100px;
+        }
+
+        .desk-top {
+            width: 180px;
+            height: 60px;
+            background: linear-gradient(180deg, #8b6914, #6b5210);
+            border: 3px solid #4a3728;
+            border-radius: 3px;
+        }
+
+        .desk-drawer {
+            width: 50px;
+            height: 35px;
+            background: #6b5210;
+            border: 2px solid #4a3728;
+            position: absolute;
+            bottom: 5px;
+            left: 65px;
+        }
+
+        .desk-drawer::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 4px;
+            background: #ffd700;
+            border-radius: 2px;
+        }
+
+        /* ============ ROOM 2 OBJECTS ============ */
+
+        /* Vault Door */
+        .vault-door {
+            width: 180px;
+            height: 200px;
+            background: linear-gradient(135deg, #4a4a4a, #333, #4a4a4a);
+            border: 8px solid #222;
+            border-radius: 10px;
+            top: 80px;
+            left: 60px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .vault-wheel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #666, #444);
+            border: 4px solid #333;
+            border-radius: 50%;
+        }
+
+        .vault-wheel::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 6px;
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .vault-wheel::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(90deg);
+            width: 40px;
+            height: 6px;
+            background: #888;
+            border-radius: 3px;
+        }
+
+        /* Safe Deposit Boxes */
+        .deposit-boxes {
+            width: 200px;
+            height: 150px;
+            background: #2a2a2a;
+            border: 4px solid #1a1a1a;
+            top: 100px;
+            right: 60px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 3px;
+            padding: 8px;
+        }
+
+        .deposit-box {
+            background: linear-gradient(180deg, #555, #444);
+            border: 1px solid #333;
+            border-radius: 2px;
+        }
+
+        /* Money Counter */
+        .money-counter {
+            width: 140px;
+            height: 80px;
+            background: linear-gradient(180deg, #2a4a2a, #1a3a1a);
+            border: 3px solid #143014;
+            border-radius: 5px;
+            bottom: 180px;
+            left: 300px;
+        }
+
+        .counter-display {
+            width: 100px;
+            height: 30px;
+            background: #001100;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            border: 2px solid #002200;
+        }
+
+        /* Gold Bars */
+        .gold-stack {
+            width: 120px;
+            height: 80px;
+            bottom: 175px;
+            right: 100px;
+        }
+
+        .gold-bar {
+            width: 80px;
+            height: 20px;
+            background: linear-gradient(180deg, #ffd700, #daa520, #b8860b);
+            border: 2px solid #8b6914;
+            border-radius: 3px;
+            margin: 3px auto;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* ============ ROOM 3 OBJECTS ============ */
+
+        /* Stock Ticker */
+        .stock-ticker {
+            width: 250px;
+            height: 60px;
+            background: #000;
+            border: 4px solid #333;
+            top: 40px;
+            left: 50px;
+            overflow: hidden;
+        }
+
+        .ticker-text {
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: nowrap;
+            animation: scroll 10s linear infinite;
+            padding: 20px;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Trading Terminal */
+        .trading-terminal {
+            width: 160px;
+            height: 140px;
+            top: 60px;
+            right: 60px;
+        }
+
+        .terminal-screen {
+            width: 160px;
+            height: 100px;
+            background: #0a0a0a;
+            border: 5px solid #2a2a2a;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .chart-line {
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                transparent 10%,
+                #00ff00 10%,
+                #00ff00 11%,
+                transparent 11%,
+                transparent 20%,
+                #00ff00 20%,
+                #00ff00 21%,
+                transparent 21%
+            );
+            position: relative;
+        }
+
+        .chart-line::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #333;
+        }
+
+        /* Graph Display */
+        .graph-display {
+            width: 180px;
+            height: 120px;
+            background: #0d1b2a;
+            border: 4px solid #1e3a5f;
+            border-radius: 5px;
+            top: 130px;
+            left: 340px;
+        }
+
+        .pie-chart {
+            width: 60px;
+            height: 60px;
+            background: conic-gradient(
+                #e94560 0% 25%,
+                #4ecca3 25% 50%,
+                #ffd700 50% 75%,
+                #00aaff 75% 100%
+            );
+            border-radius: 50%;
+            margin: 15px auto;
+        }
+
+        /* Currency Exchange */
+        .currency-board {
+            width: 150px;
+            height: 100px;
+            background: #1a1a2e;
+            border: 3px solid #ffd700;
+            border-radius: 5px;
+            bottom: 170px;
+            left: 80px;
+            overflow: hidden;
+        }
+
+        .currency-header {
+            background: #ffd700;
+            color: #1a1a2e;
+            padding: 5px;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .currency-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            font-size: 11px;
+            border-bottom: 1px solid #333;
+        }
+
+        .currency-row:last-child {
+            border-bottom: none;
+        }
+
+        .rate-up { color: #4ecca3; }
+        .rate-down { color: #e94560; }
+
+        /* Door to next room */
+        .next-door {
+            position: absolute;
+            width: 100px;
+            height: 160px;
+            background: linear-gradient(180deg, #4a3728, #3d2b1f);
+            border: 6px solid #2d1f15;
+            bottom: 0;
+            right: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 15;
+        }
+
+        .next-door.locked {
+            filter: brightness(0.5);
+            cursor: not-allowed;
+        }
+
+        .next-door.locked::before {
+            content: '🔒';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+        }
+
+        .next-door:not(.locked)::before {
+            content: '→';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            color: #4ecca3;
+            animation: doorPulse 1s infinite;
+        }
+
+        .next-door:not(.locked):hover {
+            filter: brightness(1.3);
+            box-shadow: 0 0 30px rgba(78, 204, 163, 0.5);
+        }
+
+        @keyframes doorPulse {
+            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        .door-handle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 20px;
+            background: #ffd700;
+            border-radius: 3px;
+        }
+
+        /* Door unlocked notification */
+        .door-unlocked-msg {
+            position: absolute;
+            bottom: 170px;
+            right: 20px;
+            background: #4ecca3;
+            color: #1a1a2e;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            animation: slideIn 0.5s ease, pulse 1s infinite 0.5s;
+            z-index: 100;
+            display: none;
+        }
+
+        .door-unlocked-msg.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ============ MODAL ============ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal {
+            position: relative;
+            background: linear-gradient(180deg, #1a1a2e, #16213e);
+            border: 3px solid #ffd700;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal h2 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .modal .question {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #ddd;
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .answer-btn {
+            padding: 15px 25px;
+            background: #0f3460;
+            border: 2px solid #1a4a7a;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .answer-btn:hover:not(:disabled) {
+            background: #1a4a7a;
+            border-color: #4ecca3;
+            transform: translateX(5px);
+        }
+
+        .answer-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .answer-btn.correct {
+            background: #2d6a4f !important;
+            border-color: #4ecca3 !important;
+            animation: correctPulse 0.5s ease;
+        }
+
+        .answer-btn.wrong {
+            background: #6a2d3c !important;
+            border-color: #e94560 !important;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.3s;
+            line-height: 1;
+        }
+
+        .close-modal:hover {
+            color: #e94560;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-size: 16px;
+        }
+
+        .feedback.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback.correct {
+            background: rgba(78, 204, 163, 0.2);
+            border: 2px solid #4ecca3;
+            color: #4ecca3;
+        }
+
+        .feedback.wrong {
+            background: rgba(233, 69, 96, 0.2);
+            border: 2px solid #e94560;
+            color: #e94560;
+        }
+
+        /* ============ WIN SCREEN ============ */
+        .win-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a15 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .win-screen.active {
+            display: flex;
+            animation: fadeIn 1s ease;
+        }
+
+        .win-screen h1 {
+            font-size: 60px;
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            margin-bottom: 20px;
+            animation: winPulse 2s infinite;
+        }
+
+        @keyframes winPulse {
+            0%, 100% { transform: scale(1); text-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
+            50% { transform: scale(1.05); text-shadow: 0 0 50px rgba(255, 215, 0, 0.8); }
+        }
+
+        .win-screen p {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        .win-screen .stats {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 40px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .win-screen .stats p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .win-screen button {
+            padding: 15px 50px;
+            font-size: 20px;
+            background: #4ecca3;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .win-screen button:hover {
+            transform: scale(1.1);
+            background: #5fd9b0;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: confettiFall 3s linear forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Instructions */
+        .instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #888;
+            z-index: 5;
+        }
+
+        /* Room title */
+        .room-title {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 25px;
+            border-radius: 20px;
+            font-size: 18px;
+            color: #ffd700;
+            font-weight: bold;
+            z-index: 5;
+        }
+
+        /* Responsive */
+        @media (max-width: 920px) {
+            .room-container {
+                width: 100%;
+                height: 400px;
+            }
+
+            .puzzle-station {
+                transform: scale(0.8);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Economics Escape Room</h1>
+        <div class="room-indicator">
+            <div class="room-dot active" id="dot1">1</div>
+            <div class="room-dot" id="dot2">2</div>
+            <div class="room-dot" id="dot3">3</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text"><span id="solvedCount">0</span>/12 Puzzles Solved</div>
+    </div>
+
+    <div class="room-container">
+        <!-- ROOM 1: Economics Classroom -->
+        <div class="room active" id="room1">
+            <div class="wall"></div>
+            <div class="floor"></div>
+            <div class="room-title">Room 1: Demand & Supply</div>
+
+            <!-- Puzzle 1: Whiteboard -->
+            <div class="puzzle-station whiteboard" data-room="1" data-puzzle="0">
+                <div class="whiteboard-content">
+                    <span>Supply & Demand<br>Click to solve!</span>
+                </div>
+            </div>
+
+            <!-- Puzzle 2: Computer -->
+            <div class="puzzle-station computer" data-room="1" data-puzzle="1">
+                <div class="monitor">
+                    <div class="screen">DATA_</div>
+                </div>
+                <div class="monitor-stand"></div>
+            </div>
+
+            <!-- Puzzle 3: Bookshelf -->
+            <div class="puzzle-station bookshelf" data-room="1" data-puzzle="2">
+                <div class="shelf">
+                    <div class="book" style="background: #8b0000; height: 30px;"></div>
+                    <div class="book" style="background: #00008b; height: 35px;"></div>
+                    <div class="book" style="background: #006400; height: 28px;"></div>
+                    <div class="book" style="background: #8b4513; height: 32px;"></div>
+                    <div class="book" style="background: #4b0082; height: 34px;"></div>
+                </div>
+                <div class="shelf">
+                    <div class="book" style="background: #800000; height: 32px;"></div>
+                    <div class="book" style="background: #000080; height: 30px;"></div>
+                    <div class="book" style="background: #2f4f4f; height: 35px;"></div>
+                </div>
+                <div class="shelf">
+                    <div class="book" style="background: #8b0000; height: 28px;"></div>
+                    <div class="book" style="background: #006400; height: 33px;"></div>
+                </div>
+            </div>
+
+            <!-- Puzzle 4: Desk -->
+            <div class="puzzle-station desk-station" data-room="1" data-puzzle="3">
+                <div class="desk-top"></div>
+                <div class="desk-drawer"></div>
+            </div>
+
+            <!-- Door to Room 2 -->
+            <div class="next-door locked" id="door1" data-room="1">
+                <div class="door-handle"></div>
+            </div>
+            <div class="door-unlocked-msg" id="doorMsg1">Door Unlocked! Click to proceed</div>
+
+            <div class="instructions">Click on objects with ? to solve puzzles!</div>
+        </div>
+
+        <!-- ROOM 2: Bank Vault -->
+        <div class="room" id="room2">
+            <div class="wall"></div>
+            <div class="floor"></div>
+            <div class="room-title">Room 2: Equilibrium & Shifts</div>
+
+            <!-- Puzzle 1: Vault Door -->
+            <div class="puzzle-station vault-door" data-room="2" data-puzzle="0">
+                <div class="vault-wheel"></div>
+            </div>
+
+            <!-- Puzzle 2: Deposit Boxes -->
+            <div class="puzzle-station deposit-boxes" data-room="2" data-puzzle="1">
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+                <div class="deposit-box"></div>
+            </div>
+
+            <!-- Puzzle 3: Money Counter -->
+            <div class="puzzle-station money-counter" data-room="2" data-puzzle="2">
+                <div class="counter-display">$0.00</div>
+            </div>
+
+            <!-- Puzzle 4: Gold Stack -->
+            <div class="puzzle-station gold-stack" data-room="2" data-puzzle="3">
+                <div class="gold-bar"></div>
+                <div class="gold-bar"></div>
+                <div class="gold-bar"></div>
+            </div>
+
+            <!-- Door to Room 3 -->
+            <div class="next-door locked" id="door2" data-room="2">
+                <div class="door-handle"></div>
+            </div>
+            <div class="door-unlocked-msg" id="doorMsg2">Door Unlocked! Click to proceed</div>
+
+            <div class="instructions">Solve all bank puzzles to proceed!</div>
+        </div>
+
+        <!-- ROOM 3: Stock Exchange -->
+        <div class="room" id="room3">
+            <div class="wall"></div>
+            <div class="floor"></div>
+            <div class="room-title">Room 3: PED & PES</div>
+
+            <!-- Puzzle 1: Stock Ticker -->
+            <div class="puzzle-station stock-ticker" data-room="3" data-puzzle="0">
+                <div class="ticker-text">AAPL +2.5% | GOOGL -1.2% | MSFT +0.8% | AMZN +3.1%</div>
+            </div>
+
+            <!-- Puzzle 2: Trading Terminal -->
+            <div class="puzzle-station trading-terminal" data-room="3" data-puzzle="1">
+                <div class="terminal-screen">
+                    <div class="chart-line"></div>
+                    <div style="color: #00ff00; font-size: 12px; margin-top: 10px;">TRADE NOW</div>
+                </div>
+            </div>
+
+            <!-- Puzzle 3: Graph Display -->
+            <div class="puzzle-station graph-display" data-room="3" data-puzzle="2">
+                <div class="pie-chart"></div>
+                <div style="color: #888; font-size: 11px; text-align: center;">Portfolio</div>
+            </div>
+
+            <!-- Puzzle 4: Currency Board -->
+            <div class="puzzle-station currency-board" data-room="3" data-puzzle="3">
+                <div class="currency-header">FOREX RATES</div>
+                <div class="currency-row">
+                    <span>EUR/USD</span>
+                    <span class="rate-up">+1.08</span>
+                </div>
+                <div class="currency-row">
+                    <span>GBP/USD</span>
+                    <span class="rate-down">-1.26</span>
+                </div>
+                <div class="currency-row">
+                    <span>USD/JPY</span>
+                    <span class="rate-up">+149</span>
+                </div>
+            </div>
+
+            <!-- Final Exit Door -->
+            <div class="next-door locked" id="door3" data-room="3">
+                <div class="door-handle"></div>
+            </div>
+            <div class="door-unlocked-msg" id="doorMsg3">ESCAPE! Click the door!</div>
+
+            <div class="instructions">Final room! Answer all questions to escape!</div>
+        </div>
+    </div>
+
+    <!-- Question Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <h2 id="modalTitle">Question</h2>
+            <p class="question" id="questionText"></p>
+            <div class="answers" id="answersContainer"></div>
+            <div class="feedback" id="feedback"></div>
+        </div>
+    </div>
+
+    <!-- Win Screen -->
+    <div class="win-screen" id="winScreen">
+        <h1>ESCAPED!</h1>
+        <p>Congratulations! You solved all the economics puzzles!</p>
+        <div class="stats">
+            <p>Total Questions: 12</p>
+            <p>Correct on First Try: <span id="firstTryCount">0</span></p>
+            <p>Your Score: <span id="finalScore">100%</span></p>
+        </div>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script>
+        // ============ GAME DATA ============
+        const puzzles = {
+            // ROOM 1: Demand, Supply & Basic Concepts
+            1: [
+                {
+                    title: "Micro vs Macro",
+                    question: "A government is worried about rising unemployment across the country. Is this a Microeconomic or Macroeconomic issue?",
+                    answers: [
+                        "Microeconomic - it affects individual workers",
+                        "Macroeconomic - it concerns the economy as a whole",
+                        "Neither - unemployment isn't an economic issue",
+                        "Both equally"
+                    ],
+                    correct: 1
+                },
+                {
+                    title: "Conditions of Demand",
+                    question: "A celebrity endorses a new sneaker brand and sales increase dramatically. Which condition of demand changed?",
+                    answers: [
+                        "Price of the good",
+                        "Consumer income",
+                        "Tastes and preferences",
+                        "Price of substitutes"
+                    ],
+                    correct: 2
+                },
+                {
+                    title: "Conditions of Supply",
+                    question: "A new technology makes it cheaper for farmers to grow wheat. What happens to the supply of wheat?",
+                    answers: [
+                        "Supply decreases (shifts left)",
+                        "Supply increases (shifts right)",
+                        "Supply stays the same",
+                        "Supply becomes perfectly inelastic"
+                    ],
+                    correct: 1
+                },
+                {
+                    title: "Demand Scenario",
+                    question: "If the price of coffee rises significantly, what is likely to happen to the demand for tea (a substitute)?",
+                    answers: [
+                        "Demand for tea decreases",
+                        "Demand for tea increases",
+                        "Demand for tea stays the same",
+                        "Tea becomes more expensive too"
+                    ],
+                    correct: 1
+                }
+            ],
+            // ROOM 2: Equilibrium, Disequilibrium & Shifts
+            2: [
+                {
+                    title: "Market Disequilibrium",
+                    question: "At a price of $10, quantity demanded is 100 units but quantity supplied is 150 units. What exists in this market?",
+                    answers: [
+                        "A shortage - price will rise",
+                        "A surplus - price will fall",
+                        "Equilibrium - price stays the same",
+                        "Market failure - government must intervene"
+                    ],
+                    correct: 1
+                },
+                {
+                    title: "Shift in Demand",
+                    question: "A health report reveals that eating fish reduces heart disease. What happens in the fish market?",
+                    answers: [
+                        "Demand shifts left, price falls",
+                        "Supply shifts right, price falls",
+                        "Demand shifts right, price rises",
+                        "Supply shifts left, price rises"
+                    ],
+                    correct: 2
+                },
+                {
+                    title: "Shift in Supply",
+                    question: "A hurricane destroys orange farms in Florida. What happens to the price and quantity of oranges?",
+                    answers: [
+                        "Price rises, quantity falls",
+                        "Price falls, quantity rises",
+                        "Both price and quantity rise",
+                        "Both price and quantity fall"
+                    ],
+                    correct: 0
+                },
+                {
+                    title: "Economic Systems",
+                    question: "In which economic system do consumers have the MOST influence over what goods are produced?",
+                    answers: [
+                        "Planned/Command economy",
+                        "Traditional economy",
+                        "Market economy",
+                        "Subsistence economy"
+                    ],
+                    correct: 2
+                }
+            ],
+            // ROOM 3: Elasticity (PED & PES)
+            3: [
+                {
+                    title: "PED Application",
+                    question: "Insulin for diabetics has very few substitutes and is essential for survival. What type of PED does insulin likely have?",
+                    answers: [
+                        "Elastic - demand changes a lot with price",
+                        "Inelastic - demand barely changes with price",
+                        "Unitary elastic",
+                        "Perfectly elastic"
+                    ],
+                    correct: 1
+                },
+                {
+                    title: "PES Factors",
+                    question: "A furniture maker can quickly switch between making chairs and tables. This means their supply is likely to be:",
+                    answers: [
+                        "Inelastic - slow to respond to price changes",
+                        "Elastic - quick to respond to price changes",
+                        "Perfectly inelastic",
+                        "Zero elasticity"
+                    ],
+                    correct: 1
+                },
+                {
+                    title: "Revenue & Elasticity",
+                    question: "A cinema has elastic demand for tickets. To INCREASE total revenue, the cinema should:",
+                    answers: [
+                        "Raise ticket prices",
+                        "Lower ticket prices",
+                        "Keep prices the same",
+                        "Close the cinema"
+                    ],
+                    correct: 1
+                },
+                {
+                    title: "Time & Elasticity",
+                    question: "Why is Price Elasticity of Supply usually MORE elastic in the long run than the short run?",
+                    answers: [
+                        "Consumers have more money in the long run",
+                        "Prices are controlled by government long-term",
+                        "Firms have more time to adjust production capacity",
+                        "Demand decreases over time"
+                    ],
+                    correct: 2
+                }
+            ]
+        };
+
+        // ============ GAME STATE ============
+        const gameState = {
+            currentRoom: 1,
+            solvedPuzzles: {
+                1: [false, false, false, false],
+                2: [false, false, false, false],
+                3: [false, false, false, false]
+            },
+            totalSolved: 0,
+            attempts: 0,
+            correctAnswers: 0,
+            firstTryCorrect: 0,
+            currentPuzzleAttempts: 0,
+            gameComplete: false
+        };
+
+        // ============ DOM ELEMENTS ============
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const questionText = document.getElementById('questionText');
+        const answersContainer = document.getElementById('answersContainer');
+        const feedback = document.getElementById('feedback');
+        const closeModal = document.getElementById('closeModal');
+        const progressFill = document.getElementById('progressFill');
+        const solvedCount = document.getElementById('solvedCount');
+
+        let currentPuzzle = null;
+        let currentRoom = null;
+        let currentPuzzleIndex = null;
+        let isProcessing = false;
+
+        // ============ FUNCTIONS ============
+
+        function openPuzzle(room, puzzleIndex) {
+            if (gameState.solvedPuzzles[room][puzzleIndex]) return;
+            if (isProcessing) return;
+
+            currentRoom = room;
+            currentPuzzleIndex = puzzleIndex;
+            currentPuzzle = puzzles[room][puzzleIndex];
+            gameState.currentPuzzleAttempts = 0;
+
+            modalTitle.textContent = currentPuzzle.title;
+            questionText.textContent = currentPuzzle.question;
+
+            answersContainer.innerHTML = '';
+            currentPuzzle.answers.forEach((answer, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = `${String.fromCharCode(65 + index)}. ${answer}`;
+                btn.addEventListener('click', () => checkAnswer(index));
+                answersContainer.appendChild(btn);
+            });
+
+            feedback.className = 'feedback';
+            feedback.textContent = '';
+            modalOverlay.classList.add('active');
+        }
+
+        function checkAnswer(selectedIndex) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            gameState.attempts++;
+            gameState.currentPuzzleAttempts++;
+            const buttons = answersContainer.querySelectorAll('.answer-btn');
+
+            // Disable all buttons
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === currentPuzzle.correct) {
+                // Correct answer
+                buttons[selectedIndex].classList.add('correct');
+                feedback.className = 'feedback correct show';
+                feedback.textContent = 'Correct! Well done!';
+                gameState.correctAnswers++;
+
+                if (gameState.currentPuzzleAttempts === 1) {
+                    gameState.firstTryCorrect++;
+                }
+
+                setTimeout(() => {
+                    markPuzzleSolved(currentRoom, currentPuzzleIndex);
+                    closeModalFunc();
+                    isProcessing = false;
+                }, 1200);
+            } else {
+                // Wrong answer
+                buttons[selectedIndex].classList.add('wrong');
+                buttons[currentPuzzle.correct].classList.add('correct');
+                feedback.className = 'feedback wrong show';
+                feedback.textContent = `Wrong! The correct answer was: ${currentPuzzle.answers[currentPuzzle.correct]}`;
+
+                setTimeout(() => {
+                    // Re-enable buttons for retry
+                    buttons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.classList.remove('correct', 'wrong');
+                    });
+                    feedback.className = 'feedback';
+                    isProcessing = false;
+                }, 2000);
+            }
+        }
+
+        function markPuzzleSolved(room, puzzleIndex) {
+            gameState.solvedPuzzles[room][puzzleIndex] = true;
+            gameState.totalSolved++;
+
+            // Update UI
+            const station = document.querySelector(`.puzzle-station[data-room="${room}"][data-puzzle="${puzzleIndex}"]`);
+            if (station) {
+                station.classList.add('solved');
+            }
+
+            updateProgress();
+            checkRoomComplete(room);
+        }
+
+        function updateProgress() {
+            solvedCount.textContent = gameState.totalSolved;
+            progressFill.style.width = `${(gameState.totalSolved / 12) * 100}%`;
+        }
+
+        function checkRoomComplete(room) {
+            const allSolved = gameState.solvedPuzzles[room].every(s => s);
+
+            if (allSolved) {
+                const door = document.getElementById(`door${room}`);
+                const doorMsg = document.getElementById(`doorMsg${room}`);
+
+                door.classList.remove('locked');
+                doorMsg.classList.add('show');
+
+                // For room 3, show win screen after a delay
+                if (room === 3 && !gameState.gameComplete) {
+                    gameState.gameComplete = true;
+                    setTimeout(() => {
+                        showWinScreen();
+                    }, 2000);
+                }
+            }
+        }
+
+        function goToNextRoom(roomNumber) {
+            if (gameState.gameComplete && roomNumber === 3) {
+                showWinScreen();
+                return;
+            }
+
+            const nextRoom = roomNumber + 1;
+            if (nextRoom > 3) {
+                return;
+            }
+
+            // Check if current room is complete
+            if (!gameState.solvedPuzzles[roomNumber].every(s => s)) {
+                return;
+            }
+
+            // Hide door message
+            const doorMsg = document.getElementById(`doorMsg${roomNumber}`);
+            doorMsg.classList.remove('show');
+
+            // Hide current room, show next
+            document.getElementById(`room${roomNumber}`).classList.remove('active');
+            document.getElementById(`room${nextRoom}`).classList.add('active');
+
+            // Update room dots
+            document.getElementById(`dot${roomNumber}`).classList.remove('active');
+            document.getElementById(`dot${roomNumber}`).classList.add('completed');
+            document.getElementById(`dot${nextRoom}`).classList.add('active');
+
+            gameState.currentRoom = nextRoom;
+        }
+
+        function showWinScreen() {
+            if (document.getElementById('winScreen').classList.contains('active')) return;
+
+            const score = gameState.attempts > 0
+                ? Math.round((gameState.correctAnswers / gameState.attempts) * 100)
+                : 100;
+
+            document.getElementById('finalScore').textContent = `${score}%`;
+            document.getElementById('firstTryCount').textContent = gameState.firstTryCorrect;
+            document.getElementById('winScreen').classList.add('active');
+            createConfetti();
+        }
+
+        function createConfetti() {
+            const colors = ['#ffd700', '#4ecca3', '#e94560', '#00aaff', '#ff6b6b', '#9b59b6'];
+            const winScreen = document.getElementById('winScreen');
+
+            for (let i = 0; i < 60; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = `${Math.random() * 100}%`;
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = `${Math.random() * 2}s`;
+                    confetti.style.width = `${5 + Math.random() * 10}px`;
+                    confetti.style.height = confetti.style.width;
+                    winScreen.appendChild(confetti);
+
+                    // Remove confetti after animation
+                    setTimeout(() => {
+                        if (confetti.parentNode) {
+                            confetti.parentNode.removeChild(confetti);
+                        }
+                    }, 5000);
+                }, i * 50);
+            }
+        }
+
+        function closeModalFunc() {
+            modalOverlay.classList.remove('active');
+            currentPuzzle = null;
+        }
+
+        // ============ EVENT LISTENERS ============
+
+        // Puzzle stations click
+        document.querySelectorAll('.puzzle-station').forEach(station => {
+            station.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const room = parseInt(station.dataset.room);
+                const puzzle = parseInt(station.dataset.puzzle);
+
+                // Only allow interaction with current room
+                if (room === gameState.currentRoom && !station.classList.contains('solved')) {
+                    openPuzzle(room, puzzle);
+                }
+            });
+        });
+
+        // Door clicks
+        document.querySelectorAll('.next-door').forEach(door => {
+            door.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const roomNum = parseInt(door.dataset.room);
+                if (!door.classList.contains('locked')) {
+                    goToNextRoom(roomNum);
+                }
+            });
+        });
+
+        // Close modal
+        closeModal.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!isProcessing) {
+                closeModalFunc();
+            }
+        });
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay && !isProcessing) {
+                closeModalFunc();
+            }
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (modalOverlay.classList.contains('active') && !isProcessing) {
+                if (e.key === 'Escape') {
+                    closeModalFunc();
+                    return;
+                }
+
+                // A, B, C, D for answers (both upper and lowercase)
+                const key = e.key.toUpperCase();
+                if (key >= 'A' && key <= 'D') {
+                    const keyIndex = key.charCodeAt(0) - 65;
+                    const buttons = answersContainer.querySelectorAll('.answer-btn');
+                    if (buttons[keyIndex] && !buttons[keyIndex].disabled) {
+                        buttons[keyIndex].click();
+                    }
+                }
+
+                // Also support 1, 2, 3, 4
+                if (e.key >= '1' && e.key <= '4') {
+                    const keyIndex = parseInt(e.key) - 1;
+                    const buttons = answersContainer.querySelectorAll('.answer-btn');
+                    if (buttons[keyIndex] && !buttons[keyIndex].disabled) {
+                        buttons[keyIndex].click();
+                    }
+                }
+            }
+        });
+
+        // Prevent context menu on game elements
+        document.querySelector('.room-container').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Initialize
+        updateProgress();
+        console.log('Economics Escape Room loaded successfully!');
+    </script>
+</body>
+</html>
