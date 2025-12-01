@@ -925,21 +925,6 @@
             white-space: nowrap;
         }
 
-        /* Room title */
-        .room-title {
-            position: absolute;
-            top: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-size: clamp(11px, 3vw, 18px);
-            color: #ffd700;
-            font-weight: bold;
-            z-index: 5;
-            white-space: nowrap;
-        }
     </style>
 </head>
 <body>
@@ -949,7 +934,6 @@
             <div class="room active" id="room1">
                 <div class="wall"></div>
                 <div class="floor"></div>
-                <div class="room-title">Room 1: Demand & Supply</div>
 
                 <!-- Puzzle 1: Whiteboard -->
                 <div class="puzzle-station whiteboard" data-room="1" data-puzzle="0">
@@ -1005,7 +989,6 @@
             <div class="room" id="room2">
                 <div class="wall"></div>
                 <div class="floor"></div>
-                <div class="room-title">Room 2: Equilibrium & Shifts</div>
 
                 <!-- Puzzle 1: Vault Door -->
                 <div class="puzzle-station vault-door" data-room="2" data-puzzle="0">
@@ -1053,7 +1036,6 @@
             <div class="room" id="room3">
                 <div class="wall"></div>
                 <div class="floor"></div>
-                <div class="room-title">Room 3: PED & PES</div>
 
                 <!-- Puzzle 1: Stock Ticker -->
                 <div class="puzzle-station stock-ticker" data-room="3" data-puzzle="0">
