@@ -47,83 +47,14 @@
             max-width: 900px;
         }
 
-        .header {
-            text-align: center;
-            flex-shrink: 0;
-            padding: 5px 0;
-        }
-
-        h1 {
-            color: #ffd700;
-            margin-bottom: 3px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            font-size: clamp(16px, 5vw, 28px);
-        }
-
-        .room-indicator {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 8px;
-            justify-content: center;
-        }
-
-        .room-dot {
-            width: clamp(28px, 8vw, 40px);
-            height: clamp(28px, 8vw, 40px);
-            border-radius: 50%;
-            background: #333;
-            border: 2px solid #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: clamp(12px, 3vw, 16px);
-            transition: all 0.3s;
-        }
-
-        .room-dot.active {
-            background: #4ecca3;
-            border-color: #4ecca3;
-            box-shadow: 0 0 15px rgba(78, 204, 163, 0.5);
-        }
-
-        .room-dot.completed {
-            background: #ffd700;
-            border-color: #ffd700;
-            color: #1a1a2e;
-        }
-
-        .progress-bar {
-            width: min(250px, 70vw);
-            height: 14px;
-            background: #333;
-            border-radius: 7px;
-            overflow: hidden;
-            margin: 0 auto 5px auto;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4ecca3, #45b393);
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-
-        .progress-text {
-            color: #888;
-            font-size: clamp(10px, 3vw, 14px);
-        }
-
         /* Room Container */
         .room-container {
             position: relative;
             width: 100%;
-            flex: 1;
-            min-height: 0;
+            height: 100%;
             border-radius: 10px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             overflow: hidden;
-            margin-top: 5px;
         }
 
         /* Room Styles */
@@ -1013,19 +944,6 @@
 </head>
 <body>
     <div class="game-wrapper">
-        <div class="header">
-            <h1>Economics Escape Room</h1>
-            <div class="room-indicator">
-                <div class="room-dot active" id="dot1">1</div>
-                <div class="room-dot" id="dot2">2</div>
-                <div class="room-dot" id="dot3">3</div>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-text"><span id="solvedCount">0</span>/12 Puzzles Solved</div>
-        </div>
-
         <div class="room-container">
             <!-- ROOM 1: Economics Classroom -->
             <div class="room active" id="room1">
@@ -1376,8 +1294,6 @@
         const answersContainer = document.getElementById('answersContainer');
         const feedback = document.getElementById('feedback');
         const closeModal = document.getElementById('closeModal');
-        const progressFill = document.getElementById('progressFill');
-        const solvedCount = document.getElementById('solvedCount');
 
         let currentPuzzle = null;
         let currentRoom = null;
@@ -1473,8 +1389,7 @@
         }
 
         function updateProgress() {
-            solvedCount.textContent = gameState.totalSolved;
-            progressFill.style.width = `${(gameState.totalSolved / 12) * 100}%`;
+            // Progress tracking (header removed)
         }
 
         function checkRoomComplete(room) {
@@ -1520,11 +1435,6 @@
             // Hide current room, show next
             document.getElementById(`room${roomNumber}`).classList.remove('active');
             document.getElementById(`room${nextRoom}`).classList.add('active');
-
-            // Update room dots
-            document.getElementById(`dot${roomNumber}`).classList.remove('active');
-            document.getElementById(`dot${roomNumber}`).classList.add('completed');
-            document.getElementById(`dot${nextRoom}`).classList.add('active');
 
             gameState.currentRoom = nextRoom;
         }
