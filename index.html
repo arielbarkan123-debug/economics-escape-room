@@ -925,9 +925,117 @@
             white-space: nowrap;
         }
 
+        /* ============ INTRO VIDEO OVERLAY ============ */
+        .intro-video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .intro-video-overlay.hidden {
+            display: none;
+        }
+
+        .intro-video-overlay video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Start Screen (needed for sound to work) */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a15 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 3500;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .start-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(78, 204, 163, 0.1) 0%, transparent 50%);
+            animation: ambientGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes ambientGlow {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .start-screen.hidden {
+            display: none;
+        }
+
+        .start-screen h1 {
+            font-size: clamp(32px, 10vw, 60px);
+            color: #ffd700;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 0 0 40px rgba(255, 215, 0, 0.5), 0 0 80px rgba(255, 215, 0, 0.3);
+            animation: titleGlow 2s ease-in-out infinite alternate;
+            z-index: 1;
+            letter-spacing: 3px;
+        }
+
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 40px rgba(255, 215, 0, 0.5), 0 0 80px rgba(255, 215, 0, 0.3); }
+            100% { text-shadow: 0 0 60px rgba(255, 215, 0, 0.8), 0 0 120px rgba(255, 215, 0, 0.5); }
+        }
+
+        .start-screen .tap-text {
+            font-size: clamp(18px, 5vw, 28px);
+            color: #4ecca3;
+            animation: tapPulse 1.5s ease-in-out infinite;
+            z-index: 1;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        @keyframes tapPulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
     </style>
 </head>
 <body>
+    <!-- Start Screen -->
+    <div class="start-screen" id="startScreen">
+        <h1>ECONOMICS ESCAPE ROOM</h1>
+        <p class="tap-text">TAP TO BEGIN</p>
+    </div>
+
+    <!-- Intro Video Overlay -->
+    <div class="intro-video-overlay hidden" id="introVideoOverlay">
+        <video id="introVideo" playsinline>
+            <source src="intro.mp4" type="video/mp4">
+        </video>
+    </div>
+
     <div class="game-wrapper">
         <div class="room-container">
             <!-- ROOM 1: Economics Classroom -->
@@ -1539,6 +1647,30 @@
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length > 1) e.preventDefault();
         }, { passive: false });
+
+        // ============ INTRO VIDEO ============
+        const startScreen = document.getElementById('startScreen');
+        const introVideoOverlay = document.getElementById('introVideoOverlay');
+        const introVideo = document.getElementById('introVideo');
+
+        // Start screen click - play video with sound
+        startScreen.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            introVideoOverlay.classList.remove('hidden');
+            introVideo.play();
+        });
+
+        // Hide intro and show game when video ends
+        introVideo.addEventListener('ended', () => {
+            introVideoOverlay.classList.add('hidden');
+        });
+
+        // Fallback: if video fails to load, hide overlay after 1 second
+        introVideo.addEventListener('error', () => {
+            setTimeout(() => {
+                introVideoOverlay.classList.add('hidden');
+            }, 1000);
+        });
 
         // Initialize
         updateProgress();
